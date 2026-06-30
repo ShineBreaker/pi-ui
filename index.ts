@@ -69,6 +69,10 @@ interface UiCache {
   stopAnimation: (() => void) | null;
   /** 用于 context≥90% 一次性通知防抖 */
   warnedAt90: boolean;
+  /** welcome header 是否当前激活（仅 startup reason 注册后 true，agent_start 收起后 false）
+   * 用于 agent_start 时判断是否需要收起 welcome，避免误清 /new 后的内置 header
+   */
+  welcomeActive: boolean;
 }
 
 /** 创建默认动画状态（每次启动重置） */
@@ -106,6 +110,7 @@ export default function piUiExtension(pi: ExtensionAPI): void {
     sessionStartMs,
     stopAnimation: null,
     warnedAt90: false,
+    welcomeActive: false,
   };
 
   function refreshCacheFromCtx(ctx: ExtensionContext): void {
@@ -190,8 +195,25 @@ export default function piUiExtension(pi: ExtensionAPI): void {
       { placement: "aboveEditor" },
     );
 
-    // Header：仅 startup reason 注册，避免 resume/branch 时重复渲染
+    // Pet widget + working indicator：每次 session_start 注册（含 /new）。
+    // 必须在 if(startup) 之外：/new 创建新会话时 resetExtensionUI 会清空所有 widget，
+    // 而 reason==="new" 不进 if 块，若 pet 注册留在 if 内将永久消失。
+    try {
+      ctx.ui.setWorkingIndicator?.({
+        frames: ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"],
+        intervalMs: 80,
+      });
+    } catch {}
+    createPetWidget(
+      ctx.ui,
+      () => cache.footer,
+      () => cache.anim,
+    );
+    setPetMood(cache.anim, "idle");
+
+    // Header：仅 startup reason 注册 welcome，避免 resume/branch 时重复渲染
     if (event.reason === "startup") {
+      cache.welcomeActive = true;
       // 重置动画状态（resume 时保持冻结）
       cache.anim = makeAnimState();
       // 启动 5s 动画循环（彩虹 logo + tips 打字机 + 状态脉冲）
@@ -225,19 +247,6 @@ export default function piUiExtension(pi: ExtensionAPI): void {
         },
         () => cache.anim,
       );
-      // Pet widget + working indicator：仅 startup 时注册一次
-      try {
-        ctx.ui.setWorkingIndicator?.({
-          frames: ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"],
-          intervalMs: 80,
-        });
-      } catch {}
-      createPetWidget(
-        ctx.ui,
-        () => cache.footer,
-        () => cache.anim,
-      );
-      setPetMood(cache.anim, "idle");
 
       ctx.ui.setHeader((tui, _theme) => {
         cache.tuiRef = tui as TUI;
@@ -253,15 +262,33 @@ export default function piUiExtension(pi: ExtensionAPI): void {
           cache.tuiRef?.requestRender();
         }
       });
+    } else {
+      // /new、resume、fork：无 welcome（resetExtensionUI 已恢复内置 header）
+      cache.welcomeActive = false;
     }
   });
 
   // ── Pet widget 事件 hook：跟随 agent/input/tool 状态切换 mood ────
 
-  pi.on("agent_start", async (_event, _ctx) => {
+  pi.on("agent_start", async (_event, ctx) => {
     if (cache.anim) {
       cache.anim.petMood = "thinking";
       cache.anim.petMoodStartMs = Date.now();
+    }
+    // 开始会话工作后收起 welcome header：welcome 是启动仪式（展示
+    // model/loaded/recent/tips），agent_start 标志用户开始交互，使命完成。
+    // 收起后释放 ~22 行屏幕空间，并减少 resize 全量重绘（fullRender）的行数。
+    // 用空 header factory 覆盖（setHeader(undefined) 会恢复 pi 内置 header，非清空）。
+    if (cache.welcomeActive) {
+      cache.welcomeActive = false;
+      cache.stopAnimation?.();
+      cache.stopAnimation = null;
+      ctx.ui.setHeader(() => ({
+        invalidate() {},
+        render(): string[] {
+          return [];
+        },
+      }));
     }
     requestRender();
   });

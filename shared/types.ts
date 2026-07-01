@@ -24,6 +24,8 @@ export interface FooterState {
   sessionStartMs: number;
   /** pet widget 使用；status-bar 不读 */
   modelName?: string;
+  /** 模型提供者（pet widget 第 5 行展示，避免与 model 重复） */
+  providerName?: string;
   thinkingLevel?: string;
   contextPercent?: number | null;
   contextTokens?: number | null;

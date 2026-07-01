@@ -1,6 +1,6 @@
 {
   "name": "pi-ui",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "pi TUI 装饰：启动欢迎 header + starship 风格 status bar（model · path · git · tokens · time）",
   "license": "MIT",

@@ -97,7 +97,7 @@ export default function piUiExtension(pi: ExtensionAPI): void {
     welcome: null,
     footer: {
       modelName: "...",
-      thinkingLevel: "off",
+      providerName: "...",
       cwd: process.cwd(),
       gitBranch: null,
       contextPercent: null,
@@ -124,6 +124,7 @@ export default function piUiExtension(pi: ExtensionAPI): void {
     const modelName = ctx.model?.name ?? ctx.model?.id ?? "no model";
     const providerName = ctx.model?.provider ?? "unknown";
     cache.footer.modelName = modelName;
+    cache.footer.providerName = providerName;
     cache.footer.cwd = ctx.cwd ?? process.cwd();
 
     // thinking level 从 pi API 拿
@@ -323,6 +324,7 @@ export default function piUiExtension(pi: ExtensionAPI): void {
 
   pi.on("model_select", async (_event, ctx) => {
     cache.footer.modelName = ctx.model?.name ?? ctx.model?.id ?? "no model";
+    cache.footer.providerName = ctx.model?.provider ?? "unknown";
     if (cache.welcome) {
       cache.welcome.modelName = cache.footer.modelName;
       cache.welcome.providerName = ctx.model?.provider ?? "unknown";

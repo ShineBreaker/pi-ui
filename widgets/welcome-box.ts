@@ -38,41 +38,18 @@ import {
   STATUS_BASE,
   type AnimationState,
 } from "../shared/animations.ts";
-import { NERD_FONTS } from "../shared/nerd-font.ts";
 import { formatBytes } from "../shared/format.ts";
+import {
+  WELCOME_ICONS,
+  STATUS_ICONS,
+  WEATHER_ICONS,
+} from "../shared/icons.ts";
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 图标（NERD_FONTS 从 shared/nerd-font.ts 取，单一真相源）
+// 图标：全部集中在 shared/icons.ts，这里仅导入
 // ═══════════════════════════════════════════════════════════════════════════
 
-const ICON = {
-  // 灯泡（tips）
-  tips: NERD_FONTS ? "\uF0EB" : "",
-  // 立方体（loaded）
-  loaded: NERD_FONTS ? "\uF1B3" : "",
-  // 时钟（recent）
-  recent: NERD_FONTS ? "\uF017" : "",
-  // 记事本（agenote）— nf-md-notebook
-  agenote: NERD_FONTS ? "\uF562" : "kb",
-  // 小点
-  dot: NERD_FONTS ? "\uF192" : "*",
-  // 扩展（cube）
-  ext: NERD_FONTS ? "\uF1B2" : "ext",
-  // prompt template
-  template: NERD_FONTS ? "\uF0F6" : "tpl",
-  // context file
-  ctxFile: NERD_FONTS ? "\uF15B" : "ctx",
-  // tool
-  tool: NERD_FONTS ? "\uEC19" : "tool",
-  // skill
-  skill: NERD_FONTS ? "\uF13D" : "skl",
-  // 健康状态图标
-  ok: "\u2705",
-  warn: "\u26A0\uFE0F",
-  error: "\u274C",
-  // 天气（默认 sunny；时辰问候按 hour 切换具体图标）
-  weather: NERD_FONTS ? "\uF185" : "", // nf-md-weather-sunny 兜底
-} as const;
+const ICON = { ...WELCOME_ICONS, ...STATUS_ICONS };
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Pi logo（6 行 ASCII，渐变填充）
@@ -177,29 +154,26 @@ function buildLeftColumn(
   }
 
   // 时辰问候：5-11 morning / 12-17 afternoon / 18-21 evening / 22-1 night / 2-5 late night
+  // 天气图标集中在 shared/icons.ts 的 WEATHER_ICONS
   const hour = new Date().getHours();
-  let timeIcon: string = ICON.weather; // default sunny（显式 string 以突破 as const 字面量收窄）
+  let timeIcon: string = WEATHER_ICONS.sunny; // default sunny
   let timeLabel = "morning";
   if (hour >= 2 && hour < 5) {
-    timeIcon = "\uF173";
+    timeIcon = WEATHER_ICONS.lateNight;
     timeLabel = "late night";
-  } // nf-md-weather-night-partly-cloudy
-  else if (hour >= 5 && hour < 12) {
-    timeIcon = "\uF185";
+  } else if (hour >= 5 && hour < 12) {
+    timeIcon = WEATHER_ICONS.sunny;
     timeLabel = "morning";
-  } // nf-md-weather-sunny
-  else if (hour >= 12 && hour < 18) {
-    timeIcon = "\uF172";
+  } else if (hour >= 12 && hour < 18) {
+    timeIcon = WEATHER_ICONS.afternoon;
     timeLabel = "afternoon";
-  } // nf-md-weather-partly-cloudy
-  else if (hour >= 18 && hour < 22) {
-    timeIcon = "\uF179";
+  } else if (hour >= 18 && hour < 22) {
+    timeIcon = WEATHER_ICONS.evening;
     timeLabel = "evening";
-  } // nf-md-weather-sunset
-  else {
-    timeIcon = "\uF176";
+  } else {
+    timeIcon = WEATHER_ICONS.night;
     timeLabel = "night";
-  } // nf-md-weather-night
+  }
   const greeting = timeIcon
     ? `Welcome back!  ${timeIcon} ${timeLabel}`
     : `Welcome back!  ${timeLabel}`;
@@ -283,7 +257,7 @@ function buildRightColumn(
     lines.push(sectionHeader(theme, ICON.agenote, "Agenote"));
     const a = data.agenote;
     lines.push(
-      ` ${theme.fg("muted", `${a.cards.total} cards (done: ${a.cards.done}, stable: ${a.cards.stable})`)}`,
+      ` ${theme.fg("muted", `${ICON.cards} ${a.cards.total} cards (done: ${a.cards.done}, stable: ${a.cards.stable})`)}`,
     );
     // 严重指标图标加脉冲：ok 不脉冲；warn 慢脉冲（~1.5s 周期）；error 快脉冲（~600ms 周期）
     for (const m of a.metrics) {
@@ -312,15 +286,15 @@ function buildRightColumn(
         `[${m.threshold}]`,
       );
       const icon = fg(baseColor.h, baseColor.s, l) + statusIcon + RESET;
-      lines.push(` ${name} ${value} ${thr} ${icon}`);
+      lines.push(` ${theme.fg("dim", ICON.metric)} ${name} ${value} ${thr} ${icon}`);
     }
     if (a.feedback.total > 0) {
       lines.push(
-        ` ${theme.fg("muted", `feedback: ${a.feedback.total} (stale: ${a.feedback.stale})`)}`,
+        ` ${theme.fg("muted", `${ICON.feedback} feedback: ${a.feedback.total} (stale: ${a.feedback.stale})`)}`,
       );
     } else {
       lines.push(
-        ` ${theme.fg("dim", `feedback: 0 (stale: ${a.feedback.stale})`)}`,
+        ` ${theme.fg("dim", `${ICON.feedback} feedback: 0 (stale: ${a.feedback.stale})`)}`,
       );
     }
     lines.push(sep);

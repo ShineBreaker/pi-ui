@@ -4,7 +4,7 @@ pi 编码 agent TUI 装饰扩展。提供三种组件：
 
 - **Welcome Header** — 启动时显示彩虹渐变的 pi logo、当前模型/提供者、tips、loaded 统计、Agenote 健康度、recent sessions
 - **Status Bar** — starship 风格 `path · git · time`，4 档宽度自适应（wide/narrow/compact），git dirty/ahead-behind/hash 实时查询（TTL 缓存避免频繁 fork）
-- **Pet Widget** — ASCII 猫猫 5 种 mood（idle/listening/thinking/happy/worried/error），左列展示 model/thinking/context bar/duration
+- **Pet Widget** — ASCII 猫猫 6 种 mood（idle/listening/thinking/happy/worried/error），按 mood 上色；左列 5 行会话信息与猫一一配对（model · provider · thinking · context bar · duration），thinking 分级配色（max 档彩虹动画），context 按百分比分级配色（绿→黄→橙→红）
 
 ## 结构
 

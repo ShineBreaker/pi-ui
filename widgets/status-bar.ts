@@ -32,35 +32,19 @@ import type {
 } from "@earendil-works/pi-coding-agent";
 import type { Component } from "@earendil-works/pi-tui";
 import { truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
-import { NERD_FONTS } from "../shared/nerd-font.ts";
 import {
   createKeyedTtlCache,
   createTtlCache,
   iconText,
 } from "../shared/format.ts";
 import type { FooterState } from "../shared/types.ts";
+import { BAR_ICONS as IC, LANG_PROBES } from "../shared/icons.ts";
 // FooterState re-export：历史调用方仍可从本模块导入
 export type { FooterState };
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 图标
+// 图标集中在 shared/icons.ts（BAR_ICONS / LANG_PROBES），这里别名 IC 引用。
 // ═══════════════════════════════════════════════════════════════════════════
-
-const IC = {
-  // folder open
-  folder: NERD_FONTS ? "\uF115" : "dir",
-  // git branch (code fork)
-  branch: NERD_FONTS ? "\uF126" : "b",
-  // git ahead (upload) / behind (download) — ↑ ↓ 是 BMP 符号，非 emoji
-  ahead: "\u2191", // ↑
-  behind: "\u2193", // ↓
-  // commit (bullet / circle-dot)
-  commit: NERD_FONTS ? "\uF418" : "@",
-  // clock
-  clock: NERD_FONTS ? "\uF017" : "t",
-  // separator（starship 风格 · ）
-  sep: " · ",
-} as const;
 
 // ═══════════════════════════════════════════════════════════════════════════
 // 宽度档
@@ -162,15 +146,7 @@ function segHash(state: FooterState, theme: Theme): string {
 // 项目语言检测：按 cwd 扫特征文件，1h 缓存（项目类型极少变化）
 const langCache = createKeyedTtlCache<string>(3_600_000);
 // 优先级排序：具体语言 > 通用
-const LANG_PROBES: ReadonlyArray<readonly [string, string, string]> = [
-  ["package.json", "\uE712", "Node"],
-  ["Cargo.toml", "\uE7A8", "Rust"],
-  ["pyproject.toml", "\uE73C", "Python"],
-  ["go.mod", "\uE626", "Go"],
-  ["flake.nix", "\uF313", "Nix"],
-  ["channel.scm", "\uF0CB", "Guix"],
-  ["manifest.scm", "\uF0CB", "Guix"],
-];
+// LANG_PROBES 已移至 shared/icons.ts（图标码点集中管理）
 function detectProjectLang(cwd: string): string {
   return langCache.get(cwd, () => {
     for (const [file, icon, label] of LANG_PROBES) {
